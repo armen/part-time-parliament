@@ -15,14 +15,21 @@ Message ==      [type : {"NextBallot"}, bal : Ballot]
                  mbal : Ballot \cup {-1}, mdec : Decree \cup {Blank}]
            \cup [type : {"BeginBallot"}, bal : Ballot, dec : Decree]
            \cup [type : {"Voted"}, pst : Prist, bal : Ballot, dec : Decree]
+           \cup [type : {"Success"}, bal : Ballot, dec : Decree]
 -----------------------------------------------------------------------------
-VARIABLE msgs
+VARIABLES
+    msgs,
+    ledger
 
-TypeOK == msgs \subseteq Message
+vars == <<msgs, ledger>>
+
+TypeOK == /\ msgs \subseteq Message
+          /\ ledger \in SUBSET Decree
 
 Cast(m) == msgs' = msgs \cup {m}
 
-CastNextBallot(b) == Cast([type |-> "NextBallot", bal |-> b])
+CastNextBallot(b) == /\ Cast([type |-> "NextBallot", bal |-> b])
+                     /\ UNCHANGED ledger
 
 CastLastVote(p) ==
   \E m \in msgs :
@@ -35,6 +42,7 @@ CastLastVote(p) ==
      IN /\ m.type = "NextBallot"
         /\ Cast([type |-> "LastVote", pst |-> p, bal |-> m.bal,
                  mbal |-> mVote.bal, mdec |-> mVote.dec])
+        /\ UNCHANGED ledger
 
 CastBeginBallot(b, d) ==
   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b
@@ -49,6 +57,7 @@ CastBeginBallot(b, d) ==
                      /\ m.mdec = d
                      /\ \A mm \in QLastVoteDec : m.mbal >= mm.mbal
   /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> d])
+  /\ UNCHANGED ledger
 
 (***************************************************************************)
 (* CastBeginBallot(b, d) ==                                                *)
@@ -63,6 +72,7 @@ CastBeginBallot(b, d) ==
 (*             dec == IF mdec = Blank THEN d ELSE mdec                     *)
 (*         IN /\ \A q \in Q : \E m \in mset : m.pst = q                    *)
 (*            /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> dec])    *)
+(*            /\ UNCHANGED ledger                                          *)
 (***************************************************************************)
 
 CastVote(p) ==
@@ -77,19 +87,35 @@ CastVote(p) ==
                                 /\ l.mbal > m.bal
                                 /\ l.bal < m.bal
      /\ Cast([type |-> "Voted", pst |-> p, bal |-> m.bal, dec |-> m.dec])
+     /\ UNCHANGED ledger
+
+CastSuccess(b, d) ==
+  \E Q \in Quorum :
+     LET votes == {m \in msgs : /\ m.type = "Voted"
+                                /\ m.pst \in Q
+                                /\ m.bal = b}
+     IN /\ \A q \in Q : (\E v \in votes : v.pst = q /\ v.dec = d)
+        /\ ledger' = ledger \cup {d}
+        /\ Cast([type |-> "Success", bal |-> b, dec |-> d])
+
+Write == \E m \in msgs : /\ m.type = "Success"
+                         /\ ledger' = ledger \cup {m.dec}
+                         /\ UNCHANGED msgs
 
 Init == /\ msgs = {}
+        /\ ledger = {}
 
 Next == \/ \E b \in Ballot :
            \/ CastNextBallot(b)
-           \/ \E d \in Decree : CastBeginBallot(b, d)
+           \/ \E d \in Decree : CastBeginBallot(b, d) \/ CastSuccess(b, d)
         \/ \E p \in Prist : CastLastVote(p) \/ CastVote(p)
+        \/ Write
 
-Spec == Init /\ [][Next]_msgs
+Spec == Init /\ [][Next]_vars
 
 THEOREM Spec => []TypeOK
 
 =============================================================================
 \* Modification History
-\* Last modified Thu Nov 08 07:10:02 AEDT 2018 by armen
+\* Last modified Sun Nov 11 14:18:03 AEDT 2018 by armen
 \* Created Wed Oct 24 20:58:12 AEDT 2018 by armen
