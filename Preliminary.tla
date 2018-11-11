@@ -112,10 +112,15 @@ Next == \/ \E b \in Ballot :
         \/ Write
 
 Spec == Init /\ [][Next]_vars
+LiveSpec == Spec /\ WF_vars(Next)
 
 THEOREM Spec => []TypeOK
 
+-----------------------------------------------------------------------------
+C == INSTANCE Consensus WITH chosen <- ledger,
+                             Value <- Decree
+THEOREM Spec => C!Spec
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 11 14:18:03 AEDT 2018 by armen
+\* Last modified Sun Nov 11 14:23:38 AEDT 2018 by armen
 \* Created Wed Oct 24 20:58:12 AEDT 2018 by armen
