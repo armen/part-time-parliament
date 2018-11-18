@@ -25,9 +25,15 @@ vars == <<msgs, ledger>>
 
 TypeOK == /\ msgs \subseteq Message
           /\ ledger \in SUBSET Decree
+-----------------------------------------------------------------------------
+(***************************************************************************)
+(* Series of definitions to simplify the specification                     *)
+(***************************************************************************)
+Maximum(S) == CHOOSE i \in S : (\A j \in S : i >= j)
+Cast(m)    == msgs' = msgs \cup {m}
 
-Cast(m) == msgs' = msgs \cup {m}
-
+MsgsFrom(Q, b, t) == {m \in msgs : m.type = t /\ m.pst \in Q /\ m.bal = b}
+-----------------------------------------------------------------------------
 CastNextBallot(b) == /\ Cast([type |-> "NextBallot", bal |-> b])
                      /\ UNCHANGED ledger
 
@@ -37,42 +43,38 @@ CastLastVote(p) ==
          votes == {v \in msgs : /\ v.type = "Voted"
                                 /\ v.pst = p
                                 /\ v.bal < m.bal} \cup {null(p)}
-         maxVote(V) == CHOOSE v1 \in V : \A v2 \in V : v1.bal >= v2.bal
-         mVote == maxVote(votes)
+         maxBal == Maximum({v.bal : v \in votes})
+         maxVote == CHOOSE v \in votes : v.bal = maxBal
      IN /\ m.type = "NextBallot"
         /\ Cast([type |-> "LastVote", pst |-> p, bal |-> m.bal,
-                 mbal |-> mVote.bal, mdec |-> mVote.dec])
+                 mbal |-> maxVote.bal, mdec |-> maxVote.dec])
         /\ UNCHANGED ledger
 
 CastBeginBallot(b, d) ==
   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b
   /\ \E Q \in Quorum :
-        LET QLastVote == {m \in msgs : /\ m.type = "LastVote"
-                                       /\ m.pst \in Q
-                                       /\ m.bal = b}
-            QLastVoteDec == {m \in QLastVote : m.mbal >= 0}
-        IN  /\ \A q \in Q : \E m \in QLastVote : m.pst = q
-            /\ \/ QLastVoteDec = {}
-               \/ \E m \in QLastVoteDec :
-                     /\ m.mdec = d
-                     /\ \A mm \in QLastVoteDec : m.mbal >= mm.mbal
-  /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> d])
-  /\ UNCHANGED ledger
+        LET lVotes == MsgsFrom(Q, b, "LastVote")
+            maxBal == Maximum({l.mbal : l \in lVotes})
+            mdec   == (CHOOSE l \in lVotes : l.mbal = maxBal).mdec
+            dec    == IF mdec = Blank THEN d ELSE mdec
+        IN /\ \A q \in Q : \E l \in lVotes : l.pst = q
+           /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> dec])
+           /\ UNCHANGED ledger
 
 (***************************************************************************)
 (* CastBeginBallot(b, d) ==                                                *)
 (*   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b              *)
 (*   /\ \E Q \in Quorum :                                                  *)
-(*         LET mset == {m \in msgs : /\ m.type = "LastVote"                *)
-(*                                   /\ m.pst \in Q                        *)
-(*                                   /\ m.bal = b}                         *)
-(*             maxLastVote(V) ==                                           *)
-(*               CHOOSE m \in V : \A v \in V : m.mbal >= v.mbal            *)
-(*             mdec == maxLastVote(mset).mdec                              *)
-(*             dec == IF mdec = Blank THEN d ELSE mdec                     *)
-(*         IN /\ \A q \in Q : \E m \in mset : m.pst = q                    *)
-(*            /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> dec])    *)
-(*            /\ UNCHANGED ledger                                          *)
+(*         LET QLastVote == MsgsFrom(Q, b, "LastVote")                     *)
+(*             QLastVoteDec == {m \in QLastVote : m.mbal >= 0}             *)
+(*         IN                                                              *)
+(*            /\ \A q \in Q : \E m \in QLastVote : m.pst = q               *)
+(*            /\ \/ QLastVoteDec = {}                                      *)
+(*               \/ \E m \in QLastVoteDec :                                *)
+(*                     /\ m.mdec = d                                       *)
+(*                     /\ \A mm \in QLastVoteDec : m.mbal >= mm.mbal       *)
+(*   /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> d])               *)
+(*   /\ UNCHANGED ledger                                                   *)
 (***************************************************************************)
 
 CastVote(p) ==
@@ -91,9 +93,7 @@ CastVote(p) ==
 
 CastSuccess(b, d) ==
   \E Q \in Quorum :
-     LET votes == {m \in msgs : /\ m.type = "Voted"
-                                /\ m.pst \in Q
-                                /\ m.bal = b}
+     LET votes == MsgsFrom(Q, b, "Voted")
      IN /\ \A q \in Q : (\E v \in votes : v.pst = q /\ v.dec = d)
         /\ ledger' = ledger \cup {d}
         /\ Cast([type |-> "Success", bal |-> b, dec |-> d])
