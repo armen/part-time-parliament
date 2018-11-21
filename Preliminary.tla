@@ -53,7 +53,7 @@ CastBeginBallot(b, d) ==
             votes   == Votes(lvotes)
             maxVote == MaxVote(votes)
             dec     == IF maxVote.dec = Blank THEN d ELSE maxVote.dec
-        IN /\ \A q \in Q : \E v \in votes : v.pst = q
+        IN /\ \A q \in Q : (\E v \in votes : v.pst = q)
            /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> dec])
            /\ UNCHANGED ledger
 
