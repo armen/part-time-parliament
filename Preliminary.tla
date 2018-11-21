@@ -100,22 +100,6 @@ C == INSTANCE Consensus WITH chosen <- ledger,
 THEOREM Spec => C!Spec
 THEOREM Spec => []C!Inv /\ C!Success
 THEOREM LiveSpec => C!LiveSpec
------------------------------------------------------------------------------
-(***************************************************************************)
-(* CastBeginBallot(b, d) ==                                                *)
-(*   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b              *)
-(*   /\ \E Q \in Quorum :                                                  *)
-(*         LET QLastVote == MsgsFrom(Q, b, "LastVote")                     *)
-(*             QLastVoteDec == {m \in QLastVote : m.mbal >= 0}             *)
-(*         IN                                                              *)
-(*            /\ \A q \in Q : \E m \in QLastVote : m.pst = q               *)
-(*            /\ \/ QLastVoteDec = {}                                      *)
-(*               \/ \E m \in QLastVoteDec :                                *)
-(*                     /\ m.mdec = d                                       *)
-(*                     /\ \A mm \in QLastVoteDec : m.mbal >= mm.mbal       *)
-(*   /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> d])               *)
-(*   /\ UNCHANGED ledger                                                   *)
-(***************************************************************************)
 =============================================================================
 \* Modification History
 \* Last modified Tue Nov 20 21:14:58 AEDT 2018 by armen
