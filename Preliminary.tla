@@ -8,8 +8,7 @@ ASSUME /\ \A Q \in Quorum : Q \subseteq Prist
 
 Ballot == Nat
 
-Blank == CHOOSE b : b \notin Decree \* Blank is not a decree
-
+Blank   == CHOOSE b : b \notin Decree \* Blank is not a decree
 Vote    == [pst : Prist, bal : Ballot \cup {-1}, dec : Decree \cup {Blank}]
 Message ==      [type : {"NextBallot"}, bal : Ballot]
            \cup [type : {"LastVote"}, bal : Ballot, vote : Vote]
