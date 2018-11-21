@@ -46,9 +46,9 @@ CastLastVote(q) ==
         /\ Cast([type |-> "LastVote", bal |-> m.bal, vote |-> maxVote])
         /\ UNCHANGED ledger
 
-CastBeginBallot(b, d) ==
+CastBeginBallot(b) ==
   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b
-  /\ \E Q \in Quorum :
+  /\ \E Q \in Quorum, d \in Decree:
         LET lvotes  == {m \in msgs : m.type = "LastVote" /\ m.bal = b}
             votes   == Votes(lvotes)
             maxVote == MaxVote(votes)
@@ -57,19 +57,19 @@ CastBeginBallot(b, d) ==
            /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> dec])
            /\ UNCHANGED ledger
 
-CastVote(p) ==
+CastVote(q) ==
   \E m \in msgs :
      /\ m.type = "BeginBallot"
-     /\ ~ \E l \in msgs : /\ l.type = "LastVote" /\ l.vote.pst = p
+     /\ ~ \E l \in msgs : /\ l.type = "LastVote" /\ l.vote.pst = q
                           /\ IF l.bal > l.vote.bal THEN
                                 l.bal > m.bal /\ l.vote.bal < m.bal
                              ELSE
                                 l.vote.bal > m.bal /\ l.bal < m.bal
-     /\ Cast([type |-> "Voted", vote |-> [pst |-> p, bal |-> m.bal, dec |-> m.dec]])
+     /\ Cast([type |-> "Voted", vote |-> [pst |-> q, bal |-> m.bal, dec |-> m.dec]])
      /\ UNCHANGED ledger
 
-CastSuccess(b, d) ==
-  \E Q \in Quorum :
+CastSuccess(b) ==
+  \E Q \in Quorum, d \in Decree :
      LET voted == {m \in msgs : m.type = "Voted"}
          votes == {v.vote : v \in voted}
      IN /\ \A q \in Q : (\E v \in votes : v.pst = q /\ v.dec = d)
@@ -83,10 +83,13 @@ Write == \E m \in msgs : /\ m.type = "Success"
 Init == /\ msgs = {}
         /\ ledger = {}
 
-Next == \/ \E b \in Ballot :
+Next == \/ \E b \in Ballot  :
            \/ CastNextBallot(b)
-           \/ \E d \in Decree : CastBeginBallot(b, d) \/ CastSuccess(b, d)
-        \/ \E p \in Prist : CastLastVote(p) \/ CastVote(p)
+           \/ CastBeginBallot(b)
+           \/ CastSuccess(b)
+        \/ \E q \in Prist :
+           \/ CastLastVote(q)
+           \/ CastVote(q)
         \/ Write
 
 Spec == Init /\ [][Next]_vars
