@@ -28,6 +28,7 @@ TypeOK == /\ msgs \subseteq Message
 (***************************************************************************)
 (* Series of definitions to simplify the specification                     *)
 (***************************************************************************)
+Null(p) == [pst |-> p, bal |-> -1, dec |-> Blank]
 Votes(M)   == {m.vote : m \in M}
 MaxVote(V) == CHOOSE v \in V : (\A w \in V : v.bal >= w.bal)
 
@@ -36,11 +37,10 @@ Cast(m) == msgs' = msgs \cup {m}
 CastNextBallot(b) == /\ Cast([type |-> "NextBallot", bal |-> b])
                      /\ UNCHANGED ledger
 
-CastLastVote(p) ==
+CastLastVote(q) ==
   \E m \in msgs :
-     LET null(pst) == [pst |-> pst, bal |-> -1, dec |-> Blank]
-         voted == {v \in msgs : /\ v.type = "Voted"}
-         votes == {v \in Votes(voted) : v.pst = p /\ v.bal < m.bal} \cup {null(p)}
+     LET voted == {v \in msgs : /\ v.type = "Voted"}
+         votes == {v \in Votes(voted) : v.pst = q /\ v.bal < m.bal} \cup {Null(q)}
          maxVote == MaxVote(votes)
      IN /\ m.type = "NextBallot"
         /\ Cast([type |-> "LastVote", bal |-> m.bal, vote |-> maxVote])
