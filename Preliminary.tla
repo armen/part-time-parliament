@@ -29,8 +29,8 @@ TypeOK == /\ msgs \subseteq Message
 (* Series of definitions to simplify the specification                     *)
 (***************************************************************************)
 Null(p) == [pst |-> p, bal |-> -1, dec |-> Blank]
-Votes(M)   == {m.vote : m \in M}
-MaxVote(V) == CHOOSE v \in V : (\A w \in V : v.bal >= w.bal)
+Votes(M) == {m.vote : m \in M}
+Max(V) == CHOOSE v \in V : (\A w \in V : v.bal >= w.bal)
 
 Cast(m) == msgs' = msgs \cup {m}
 -----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ CastLastVote(q) ==
   \E m \in msgs :
      LET voted == {v \in msgs : /\ v.type = "Voted"}
          votes == {v \in Votes(voted) : v.pst = q /\ v.bal < m.bal} \cup {Null(q)}
-         maxVote == MaxVote(votes)
+         maxVote == Max(votes)
      IN /\ m.type = "NextBallot"
         /\ Cast([type |-> "LastVote", bal |-> m.bal, vote |-> maxVote])
         /\ UNCHANGED ledger
@@ -51,7 +51,7 @@ CastBeginBallot(b) ==
   /\ \E Q \in Quorum, d \in Decree:
         LET lvotes  == {m \in msgs : m.type = "LastVote" /\ m.bal = b}
             votes   == Votes(lvotes)
-            maxVote == MaxVote(votes)
+            maxVote == Max(votes)
             dec     == IF maxVote.dec = Blank THEN d ELSE maxVote.dec
         IN /\ \A q \in Q : (\E v \in votes : v.pst = q)
            /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> dec])
@@ -83,7 +83,7 @@ Write == \E m \in msgs : /\ m.type = "Success"
 Init == /\ msgs = {}
         /\ ledger = {}
 
-Next == \/ \E b \in Ballot  :
+Next == \/ \E b \in Ballot :
            \/ CastNextBallot(b)
            \/ CastBeginBallot(b)
            \/ CastSuccess(b)
