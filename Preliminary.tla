@@ -16,9 +16,7 @@ Message ==      [type : {"NextBallot"}, bal : Ballot]
            \cup [type : {"Voted"}, vote : Vote]
            \cup [type : {"Success"}, bal : Ballot, dec : Decree]
 -----------------------------------------------------------------------------
-VARIABLES
-    msgs,
-    ledger
+VARIABLES msgs, ledger
 
 vars == <<msgs, ledger>>
 
@@ -48,7 +46,7 @@ CastLastVote(q) ==
 
 CastBeginBallot(b) ==
   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b
-  /\ \E Q \in Quorum, d \in Decree:
+  /\ \E Q \in Quorum, d \in Decree :
         LET votes   == LastVotes(b)
             maxVote == Max(votes)
             dec     == IF maxVote.dec = Blank THEN d ELSE maxVote.dec
