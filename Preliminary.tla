@@ -29,7 +29,8 @@ TypeOK == /\ msgs \subseteq Message
 (* Series of definitions to simplify the specification                     *)
 (***************************************************************************)
 Null(p) == [pst |-> p, bal |-> -1, dec |-> Blank]
-Votes(M) == {m.vote : m \in M}
+Voted == {v.vote : v \in {m \in msgs : m.type = "Voted"}}
+LastVotes(b) == {v.vote : v \in {m \in msgs : m.type = "LastVote" /\ m.bal = b}}
 Max(V) == CHOOSE v \in V : (\A w \in V : v.bal >= w.bal)
 
 Cast(m) == msgs' = msgs \cup {m}
@@ -39,8 +40,7 @@ CastNextBallot(b) == /\ Cast([type |-> "NextBallot", bal |-> b])
 
 CastLastVote(q) ==
   \E m \in msgs :
-     LET voted == {v \in msgs : /\ v.type = "Voted"}
-         votes == {v \in Votes(voted) : v.pst = q /\ v.bal < m.bal} \cup {Null(q)}
+     LET votes == {v \in Voted : v.pst = q /\ v.bal < m.bal} \cup {Null(q)}
          maxVote == Max(votes)
      IN /\ m.type = "NextBallot"
         /\ Cast([type |-> "LastVote", bal |-> m.bal, vote |-> maxVote])
@@ -49,8 +49,7 @@ CastLastVote(q) ==
 CastBeginBallot(b) ==
   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b
   /\ \E Q \in Quorum, d \in Decree:
-        LET lvotes  == {m \in msgs : m.type = "LastVote" /\ m.bal = b}
-            votes   == Votes(lvotes)
+        LET votes   == LastVotes(b)
             maxVote == Max(votes)
             dec     == IF maxVote.dec = Blank THEN d ELSE maxVote.dec
         IN /\ \A q \in Q : (\E v \in votes : v.pst = q)
@@ -70,11 +69,9 @@ CastVote(q) ==
 
 CastSuccess(b) ==
   \E Q \in Quorum, d \in Decree :
-     LET voted == {m \in msgs : m.type = "Voted"}
-         votes == {v.vote : v \in voted}
-     IN /\ \A q \in Q : (\E v \in votes : v.pst = q /\ v.dec = d)
-        /\ ledger' = ledger \cup {d}
-        /\ Cast([type |-> "Success", bal |-> b, dec |-> d])
+     /\ \A q \in Q : (\E v \in Voted : v.pst = q /\ v.dec = d)
+     /\ ledger' = ledger \cup {d}
+     /\ Cast([type |-> "Success", bal |-> b, dec |-> d])
 
 Write == \E m \in msgs : /\ m.type = "Success"
                          /\ ledger' = ledger \cup {m.dec}
@@ -104,5 +101,5 @@ THEOREM Spec => []C!Inv /\ C!Success
 THEOREM LiveSpec => C!LiveSpec
 =============================================================================
 \* Modification History
-\* Last modified Tue Nov 20 21:14:58 AEDT 2018 by armen
+\* Last modified Sun Nov 25 09:44:31 AEDT 2018 by armen
 \* Created Wed Oct 24 20:58:12 AEDT 2018 by armen
