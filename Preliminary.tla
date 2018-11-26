@@ -1,12 +1,11 @@
 ----------------------------- MODULE Preliminary ----------------------------
 EXTENDS Integers
 
-CONSTANTS Decree, Prist, Quorum
+CONSTANTS Decree, Prist, Quorum, Ballot
 
 ASSUME /\ \A Q \in Quorum : Q \subseteq Prist
        /\ \A Q1, Q2 \in Quorum : Q1 \cap Q2 # {}
-
-Ballot == Nat
+       /\ Ballot \subseteq Nat
 
 Blank   == CHOOSE b : b \notin Decree \* Blank is not a decree
 Null    == [pst : Prist, bal : {-1}, dec : {Blank}]
@@ -100,5 +99,5 @@ THEOREM Spec => []C!Inv /\ C!Success
 THEOREM LiveSpec => C!LiveSpec
 =============================================================================
 \* Modification History
-\* Last modified Mon Nov 26 06:00:47 AEDT 2018 by armen
+\* Last modified Mon Nov 26 21:34:52 AEDT 2018 by armen
 \* Created Wed Oct 24 20:58:12 AEDT 2018 by armen
