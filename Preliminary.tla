@@ -9,9 +9,10 @@ ASSUME /\ \A Q \in Quorum : Q \subseteq Prist
 Ballot == Nat
 
 Blank   == CHOOSE b : b \notin Decree \* Blank is not a decree
-Vote    == [pst : Prist, bal : Ballot \cup {-1}, dec : Decree \cup {Blank}]
+Null    == [pst : Prist, bal : {-1}, dec : {Blank}]
+Vote    == [pst : Prist, bal : Ballot, dec : Decree]
 Message ==      [type : {"NextBallot"}, bal : Ballot]
-           \cup [type : {"LastVote"}, bal : Ballot, vote : Vote]
+           \cup [type : {"LastVote"}, bal : Ballot, vote : Vote \cup Null]
            \cup [type : {"BeginBallot"}, bal : Ballot, dec : Decree]
            \cup [type : {"Voted"}, vote : Vote]
            \cup [type : {"Success"}, bal : Ballot, dec : Decree]
@@ -26,7 +27,7 @@ TypeOK == /\ msgs \subseteq Message
 (***************************************************************************)
 (* Series of definitions to simplify the specification                     *)
 (***************************************************************************)
-Null(p) == [pst |-> p, bal |-> -1, dec |-> Blank]
+null(p) == [pst |-> p, bal |-> -1, dec |-> Blank]
 Voted == {v.vote : v \in {m \in msgs : m.type = "Voted"}}
 LastVotes(b) == {v.vote : v \in {m \in msgs : m.type = "LastVote" /\ m.bal = b}}
 Max(V) == CHOOSE v \in V : (\A w \in V : v.bal >= w.bal)
@@ -38,7 +39,7 @@ CastNextBallot(b) == /\ Cast([type |-> "NextBallot", bal |-> b])
 
 CastLastVote(q) ==
   \E m \in msgs :
-     LET votes == {v \in Voted : v.pst = q /\ v.bal < m.bal} \cup {Null(q)}
+     LET votes == {v \in Voted : v.pst = q /\ v.bal < m.bal} \cup {null(q)}
          maxVote == Max(votes)
      IN /\ m.type = "NextBallot"
         /\ Cast([type |-> "LastVote", bal |-> m.bal, vote |-> maxVote])
@@ -99,5 +100,5 @@ THEOREM Spec => []C!Inv /\ C!Success
 THEOREM LiveSpec => C!LiveSpec
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 25 09:44:31 AEDT 2018 by armen
+\* Last modified Mon Nov 26 06:00:47 AEDT 2018 by armen
 \* Created Wed Oct 24 20:58:12 AEDT 2018 by armen
