@@ -57,11 +57,9 @@ CastBeginBallot(b) ==
 CastVote(q) ==
   \E m \in msgs :
      /\ m.type = "BeginBallot"
-     /\ ~ \E l \in msgs : /\ l.type = "LastVote" /\ l.vote.pst = q
-                          /\ IF l.bal > l.vote.bal THEN
-                                l.bal > m.bal /\ l.vote.bal < m.bal
-                             ELSE
-                                l.vote.bal > m.bal /\ l.bal < m.bal
+     /\ ~ \E l \in msgs :
+             /\ l.type = "LastVote" /\ l.vote.pst = q
+             /\ l.vote.bal < m.bal /\ m.bal < l.bal
      /\ Cast([type |-> "Voted", vote |-> [pst |-> q, bal |-> m.bal, dec |-> m.dec]])
      /\ UNCHANGED ledger
 
