@@ -79,9 +79,7 @@ Next == \/ \E b \in Ballot :
            \/ CastNextBallot(b)
            \/ CastBeginBallot(b)
            \/ CastSuccess(b)
-        \/ \E q \in Prist :
-           \/ CastLastVote(q)
-           \/ CastVote(q)
+        \/ \E q \in Prist : CastLastVote(q) \/ CastVote(q)
         \/ Write
 -----------------------------------------------------------------------------
 Spec == Init /\ [][Next]_vars
