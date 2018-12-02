@@ -30,7 +30,6 @@ null(p) == [pst |-> p, bal |-> -1, dec |-> Blank]
 Voted == {v.vote : v \in {m \in msgs : m.type = "Voted"}}
 LastVotes(b) == {v.vote : v \in {m \in msgs : m.type = "LastVote" /\ m.bal = b}}
 Max(V) == CHOOSE v \in V : (\A w \in V : v.bal >= w.bal)
-
 Cast(m) == msgs' = msgs \cup {m}
 -----------------------------------------------------------------------------
 CastNextBallot(b) == /\ Cast([type |-> "NextBallot", bal |-> b])
@@ -84,18 +83,18 @@ Next == \/ \E b \in Ballot :
            \/ CastLastVote(q)
            \/ CastVote(q)
         \/ Write
-
+-----------------------------------------------------------------------------
 Spec == Init /\ [][Next]_vars
-LiveSpec == Spec /\ WF_vars(Next)
+FairSpec == Spec /\ WF_vars(Next)
 
 THEOREM Spec => []TypeOK
 -----------------------------------------------------------------------------
 C == INSTANCE Consensus WITH chosen <- ledger,
                              Value <- Decree
 THEOREM Spec => C!Spec
-THEOREM Spec => []C!Inv /\ C!Success
-THEOREM LiveSpec => C!LiveSpec
+THEOREM Spec => []C!Safety /\ C!Liveness
+THEOREM FairSpec => C!FairSpec
 =============================================================================
 \* Modification History
-\* Last modified Mon Nov 26 21:34:52 AEDT 2018 by armen
+\* Last modified Sun Dec 02 19:44:08 AEDT 2018 by armen
 \* Created Wed Oct 24 20:58:12 AEDT 2018 by armen

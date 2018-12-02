@@ -18,16 +18,16 @@ Spec == Init /\ [][Next]_chosen
 (***************************************************************************)
 (* Safety: At most one value is chosen.                                    *)
 (***************************************************************************)
-Inv == /\ TypeOK
-       /\ Cardinality(chosen) <= 1
+Safety == /\ TypeOK
+          /\ Cardinality(chosen) <= 1
 
-THEOREM Spec => []Inv
+THEOREM Spec => []Safety
 -----------------------------------------------------------------------------
 (***************************************************************************)
 (* Liveness: A value is eventually chosen.                                 *)
 (***************************************************************************)
-Success  == <>(chosen # {})
-LiveSpec == Spec /\ WF_chosen(Next)
+Liveness == <>(chosen # {})
+FairSpec == Spec /\ WF_chosen(Next)
 
-THEOREM LiveSpec => Success
+THEOREM FairSpec => Liveness
 =============================================================================
