@@ -93,6 +93,3 @@ THEOREM Spec => C!Spec
 THEOREM Spec => []C!Safety /\ C!Liveness
 THEOREM FairSpec => C!FairSpec
 =============================================================================
-\* Modification History
-\* Last modified Sun Dec 02 19:44:08 AEDT 2018 by armen
-\* Created Wed Oct 24 20:58:12 AEDT 2018 by armen
