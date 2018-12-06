@@ -14,7 +14,7 @@ Message ==      [type : {"NextBallot"}, bal : Ballot]
            \cup [type : {"LastVote"}, bal : Ballot, vote : Vote \cup Null]
            \cup [type : {"BeginBallot"}, bal : Ballot, dec : Decree]
            \cup [type : {"Voted"}, vote : Vote]
-           \cup [type : {"Success"}, bal : Ballot, dec : Decree]
+           \cup [type : {"Success"}, dec : Decree]
 -----------------------------------------------------------------------------
 VARIABLES msgs, ledger
 
@@ -64,9 +64,9 @@ CastVote(q) ==
 
 CastSuccess(b) ==
   \E Q \in Quorum, d \in Decree :
-     /\ \A q \in Q : (\E v \in Voted : v.pst = q /\ v.dec = d)
+     /\ \A q \in Q : (\E v \in Voted : v.pst = q /\ v.bal = b /\ v.dec = d)
      /\ ledger' = ledger \cup {d}
-     /\ Cast([type |-> "Success", bal |-> b, dec |-> d])
+     /\ Cast([type |-> "Success", dec |-> d])
 
 Write == \E m \in msgs : /\ m.type = "Success"
                          /\ ledger' = ledger \cup {m.dec}
