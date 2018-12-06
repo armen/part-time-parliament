@@ -89,6 +89,7 @@ THEOREM Spec => []TypeOK
 C == INSTANCE Consensus WITH chosen <- ledger,
                              Value <- Decree
 THEOREM Spec => C!Spec
-THEOREM Spec => []C!Safety /\ C!Liveness
+THEOREM Spec => []C!Safety
 THEOREM FairSpec => C!FairSpec
+THEOREM FairSpec => C!Liveness
 =============================================================================
