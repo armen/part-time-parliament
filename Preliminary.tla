@@ -46,10 +46,10 @@ CastLastVote(q) ==
 CastBeginBallot(b) ==
   /\ ~ \E m \in msgs : m.type = "BeginBallot" /\ m.bal = b
   /\ \E Q \in Quorum, d \in Decree :
-        LET votes   == LastVotes(b)
-            maxVote == Max(votes)
+        LET lVotes  == LastVotes(b)
+            maxVote == Max(lVotes)
             dec     == IF maxVote.dec = Blank THEN d ELSE maxVote.dec
-        IN /\ \A q \in Q : (\E v \in votes : v.pst = q)
+        IN /\ \A q \in Q : (\E v \in lVotes : v.pst = q)
            /\ Cast([type |-> "BeginBallot", bal |-> b, dec |-> dec])
            /\ UNCHANGED ledger
 
