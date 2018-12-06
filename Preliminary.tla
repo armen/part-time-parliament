@@ -75,10 +75,9 @@ Write == \E m \in msgs : /\ m.type = "Success"
 Init == /\ msgs = {}
         /\ ledger = {}
 
-Next == \/ \E b \in Ballot :
-           \/ CastNextBallot(b)
-           \/ CastBeginBallot(b)
-           \/ CastSuccess(b)
+Next == \/ \E b \in Ballot : \/ CastNextBallot(b)
+                             \/ CastBeginBallot(b)
+                             \/ CastSuccess(b)
         \/ \E q \in Prist : CastLastVote(q) \/ CastVote(q)
         \/ Write
 -----------------------------------------------------------------------------
